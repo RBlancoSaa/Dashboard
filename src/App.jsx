@@ -1,8 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Inbox, FileCheck2 } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function Dashboard() {
   const [file, setFile] = useState(null);
@@ -49,32 +45,40 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4EFEA] p-10">
-      <h1 className="text-3xl font-bold text-[#2D1E17] mb-6">Automation Logistics Dashboard</h1>
-      <Card
-        className="border-dashed border-4 border-[#796254] p-8 rounded-2xl text-center bg-[#FFFDFB]"
+    <div style={{ minHeight: "100vh", padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Automation Logistics Dashboard</h1>
+
+      <div
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
+        style={{
+          border: "2px dashed #aaa",
+          padding: "2rem",
+          background: "#f4f4f4",
+          borderRadius: "1rem",
+          marginBottom: "1rem",
+        }}
       >
-        <CardContent>
-          <motion.div className="flex flex-col items-center gap-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Inbox className="w-16 h-16 text-[#796254]" />
-            <p className="text-[#796254]">Sleep hier je transportopdracht (.pdf)</p>
-            {file && (
-              <div className="text-[#2D1E17] font-medium">
-                <FileCheck2 className="inline-block mr-2" />
-                {file.name}
-              </div>
-            )}
-          </motion.div>
-        </CardContent>
-      </Card>
-      <div className="mt-6 flex items-center justify-between">
-        <Button disabled={!file || isSending} onClick={handleUpload} className="bg-[#523F31] hover:bg-[#2D1E17] text-white">
-          Upload en verstuur
-        </Button>
-        <span className="text-sm text-[#796254]">{uploadStatus}</span>
+        <p>Sleep hier je transportopdracht (.pdf)</p>
+        {file && <strong>{file.name}</strong>}
       </div>
+
+      <button
+        disabled={!file || isSending}
+        onClick={handleUpload}
+        style={{
+          padding: "0.5rem 1rem",
+          background: "#523F31",
+          color: "white",
+          border: "none",
+          borderRadius: "0.5rem",
+          cursor: isSending ? "wait" : "pointer",
+        }}
+      >
+        Upload en verstuur
+      </button>
+
+      <p style={{ marginTop: "1rem", color: "#333" }}>{uploadStatus}</p>
     </div>
   );
 }
