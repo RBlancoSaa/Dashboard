@@ -29,10 +29,9 @@ export default function App() {
       }
 
       const data = await response.json();
-      console.log('Succesvol:', data);
-      alert('Upload gelukt!');
+      alert('Upload gelukt! Je krijgt de mail binnenkort.');
     } catch (error) {
-      alert('⚠️ Netwerkfout: ' + error.message);
+      alert('Netwerkfout: ' + error.message);
     }
   };
 
@@ -48,38 +47,28 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen p-10 bg-gray-100">
-      <h1 className="text-3xl font-bold mb-6">Automation Logistics Dashboard</h1>
-
-      <form onSubmit={handleUpload} className="space-y-4">
+    <div>
+      <h1>Automation Logistics Dashboard</h1>
+      <form onSubmit={handleUpload}>
         <div
-          className="border-4 border-dashed p-8 rounded-lg bg-white text-center cursor-pointer"
           onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
+          onDragOver={e => e.preventDefault()}
           onClick={() => fileInputRef.current.click()}
+          style={{border: '2px dashed #ccc', padding: 20, textAlign: 'center', cursor: 'pointer'}}
         >
-          <p className="text-gray-700">Sleep hier je transportopdracht (.pdf)</p>
-          {fileName && (
-            <p className="mt-4 text-sm text-green-700">
-              Geselecteerd bestand: {fileName}
-            </p>
-          )}
+          Sleep hier je transportopdracht (.pdf)
+          {fileName && <div>Geselecteerd: {fileName}</div>}
         </div>
 
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf"
-          className="hidden"
+          style={{display: 'none'}}
           onChange={(e) => setFileName(e.target.files[0]?.name || "")}
         />
 
-        <button
-          type="submit"
-          className="bg-[#4c372d] text-white px-4 py-2 rounded shadow"
-        >
-          Uploaden
-        </button>
+        <button type="submit">Uploaden</button>
       </form>
     </div>
   );
