@@ -1,84 +1,86 @@
-import { useState } from "react";
+import React, { useState, useRef } from 'react';
 
-export default function Dashboard() {
-  const [file, setFile] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState("");
-  const [isSending, setIsSending] = useState(false);
+export default function App() {
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef(null);
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === "application/pdf") {
-      setFile(droppedFile);
-      setUploadStatus("Bestand geaccepteerd: " + droppedFile.name);
-    } else {
-      setUploadStatus("Alleen PDF-bestanden zijn toegestaan.");
+  const handleUpload = async (event) => {
+    event.preventDefault();
+
+    const file = fileInputRef.current.files[0];
+    if (!file) {
+      alert("Geen bestand geselecteerd");
+      return;
     }
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-    setUploadStatus("Bezig met verwerken...");
-    setIsSending(true);
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const response = await fetch("/api/process-upload", {
-        method: "POST",
+      const response = await fetch('https://automatinglogistics-api.onrender.com/api/upload', {
+        method: 'POST',
         body: formData,
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setUploadStatus("Easytrip bestand aangemaakt en verzonden: " + result.filename);
-      } else {
-        setUploadStatus("Fout bij verwerken: " + result.error);
+      if (!response.ok) {
+        const text = await response.text();
+        alert('Server gaf fout: ' + text);
+        return;
       }
+
+      const data = await response.json();
+      console.log('Succesvol:', data);
+      alert('Upload gelukt!');
     } catch (error) {
-      setUploadStatus("Netwerkfout: " + error.message);
-    } finally {
-      setIsSending(false);
+      alert('⚠️ Netwerkfout: ' + error.message);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === "application/pdf") {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInputRef.current.files = dataTransfer.files;
+      setFileName(file.name);
     }
   };
 
   return (
-    <div style={{ minHeight: "100vh", padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Automation Logistics Dashboard</h1>
+    <div className="min-h-screen p-10 bg-gray-100">
+      <h1 className="text-3xl font-bold mb-6">Automation Logistics Dashboard</h1>
 
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        style={{
-          border: "2px dashed #aaa",
-          padding: "2rem",
-          background: "#f4f4f4",
-          borderRadius: "1rem",
-          marginBottom: "1rem",
-        }}
-      >
-        <p>Sleep hier je transportopdracht (.pdf)</p>
-        {file && <strong>{file.name}</strong>}
-      </div>
+      <form onSubmit={handleUpload} className="space-y-4">
+        <div
+          className="border-4 border-dashed p-8 rounded-lg bg-white text-center cursor-pointer"
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          onClick={() => fileInputRef.current.click()}
+        >
+          <p className="text-gray-700">Sleep hier je transportopdracht (.pdf)</p>
+          {fileName && (
+            <p className="mt-4 text-sm text-green-700">
+              Geselecteerd bestand: {fileName}
+            </p>
+          )}
+        </div>
 
-      <button
-        disabled={!file || isSending}
-        onClick={handleUpload}
-        style={{
-          padding: "0.5rem 1rem",
-          background: "#523F31",
-          color: "white",
-          border: "none",
-          borderRadius: "0.5rem",
-          cursor: isSending ? "wait" : "pointer",
-        }}
-      >
-        Upload en verstuur
-      </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          onChange={(e) => setFileName(e.target.files[0]?.name || "")}
+        />
 
-      <p style={{ marginTop: "1rem", color: "#333" }}>{uploadStatus}</p>
+        <button
+          type="submit"
+          className="bg-[#4c372d] text-white px-4 py-2 rounded shadow"
+        >
+          Uploaden
+        </button>
+      </form>
     </div>
   );
 }
