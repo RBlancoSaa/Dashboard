@@ -1,3 +1,37 @@
+const handleUpload = async (event) => {
+  event.preventDefault();
+
+  const fileInput = document.querySelector('input[type="file"]');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Geen bestand geselecteerd");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch('/api/parse', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('Serverfout:', text);
+      alert('Fout bij uploaden: ' + text);
+      return;
+    }
+
+    const data = await response.json();
+    console.log('Succesvol:', data);
+    alert('Upload gelukt!');
+  } catch (error) {
+    console.error('Netwerkfout:', error);
+    alert('Netwerkfout: ' + error.message);
+  }
+};
 import React, { useState } from 'react';
 
 export default function App() {
@@ -21,3 +55,7 @@ export default function App() {
     </div>
   );
 }
+<form onSubmit={handleUpload}>
+  <input type="file" accept=".pdf" />
+  <button type="submit">Upload en verstuur</button>
+</form>
