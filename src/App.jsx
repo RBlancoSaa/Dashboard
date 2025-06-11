@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase client met env-variabelen
+// Supabase initialisatie
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -15,6 +15,7 @@ export default function App() {
   const handleUpload = async (event) => {
     event.preventDefault();
     const file = fileInputRef.current?.files[0];
+
     if (!file) {
       setStatusMessage('❌ Geen bestand geselecteerd.');
       return;
@@ -43,17 +44,17 @@ export default function App() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload`, {
+      const response = await fetch('https://api.automatinglogistics.com/api/upload', {
         method: 'POST',
         body: formData,
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const msg = await response.text();
-        throw new Error(msg);
+        throw new Error(result.error || 'Onbekende fout');
       }
 
-      const result = await response.json();
       setStatusMessage(`✅ Verwerkt: ${result.referentie}`);
     } catch (backendError) {
       console.error('Backendfout:', backendError.message);
