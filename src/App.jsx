@@ -1,4 +1,11 @@
 import React, { useState, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase client met env-variabelen
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 export default function App() {
   const [fileName, setFileName] = useState('');
@@ -7,31 +14,50 @@ export default function App() {
 
   const handleUpload = async (event) => {
     event.preventDefault();
-
-    const file = fileInputRef.current.files[0];
+    const file = fileInputRef.current?.files[0];
     if (!file) {
       setStatusMessage('❌ Geen bestand geselecteerd.');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('pdf', file); // let op: veldnaam moet "pdf" zijn, niet "file"
+    const filePath = `pdf/${Date.now()}_${file.name}`;
+    setStatusMessage('⏳ Uploaden naar Supabase...');
+
+    const { error: uploadError } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'application/pdf',
+      });
+
+    if (uploadError) {
+      console.error('Uploadfout:', uploadError.message);
+      setStatusMessage(`❌ Uploadfout: ${uploadError.message}`);
+      return;
+    }
+
+    setStatusMessage('📨 Bestand geüpload. Verwerken via backend...');
 
     try {
-      const response = await fetch('/api/transportopdracht', {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload`, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || 'Upload mislukt');
+        const msg = await response.text();
+        throw new Error(msg);
       }
 
-      const data = await response.json();
-      setStatusMessage(`✅ Upload gelukt! Bestand: ${data.bestandsnaam}`);
-    } catch (error) {
-      setStatusMessage(`❌ Fout bij upload: ${error.message}`);
+      const result = await response.json();
+      setStatusMessage(`✅ Verwerkt: ${result.referentie}`);
+    } catch (backendError) {
+      console.error('Backendfout:', backendError.message);
+      setStatusMessage(`❌ Backendfout: ${backendError.message}`);
     }
   };
 
@@ -80,13 +106,11 @@ export default function App() {
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Upload en verstuur
+          Upload naar Supabase
         </button>
       </form>
 
-      {statusMessage && (
-        <p className="mt-4">{statusMessage}</p>
-      )}
+      {statusMessage && <p className="mt-4">{statusMessage}</p>}
     </div>
   );
 }
